@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="m8.tugas.controllers.BukuController"
+            style="-fx-background-color: linear-gradient(to bottom, #e3f2fd, #ffffff); -fx-font-family: 'Segoe UI', sans-serif;">
+    
+    <center>
+        <HBox spacing="30" alignment="CENTER">
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <!-- Form input -->
+            <VBox spacing="20" alignment="TOP_CENTER"
+                  style="-fx-background-color: white; -fx-padding: 25; -fx-border-color: #cfd8dc;
+                         -fx-border-radius: 10; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 4);">
+                <Label text="Form Buku"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+
+                <GridPane hgap="10" vgap="12">
+                    <Label text="Kode Buku:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="kodeField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                    <Label text="Kategori:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <ComboBox fx:id="kategoriComboBox" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                    <Label text="Judul:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <TextField fx:id="judulField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    <Label text="Pengarang:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                    <TextField fx:id="pengarangField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                    <Label text="Penerbit:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                    <TextField fx:id="penerbitField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                    <Label text="Tahun Terbit:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                    <TextField fx:id="tahunField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                    <Label text="Edisi:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                    <TextField fx:id="edisiField" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                    <Label text="Tgl. Pengadaan:" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                    <DatePicker fx:id="tanggalPengadaanPicker" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+                </GridPane>
+
+                <HBox spacing="10" alignment="CENTER">
+                    <Button text="Add" onAction="#handleAdd"
+                            style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-background-radius: 6;"/>
+                    <Button text="Update" onAction="#handleUpdate"
+                            style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-background-radius: 6;"/>
+                    <Button text="Delete" onAction="#handleDelete"
+                            style="-fx-background-color: #f44336; -fx-text-fill: white; -fx-background-radius: 6;"/>
+                </HBox>
+            </VBox>
+
+            <!-- TableView -->
+            <VBox spacing="10" alignment="TOP_CENTER"
+                  style="-fx-background-color: white; -fx-padding: 20; -fx-border-color: #cfd8dc;
+                         -fx-border-radius: 10; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 4);">
+                <Label text="Data Buku"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+                <TableView fx:id="bukuTable"
+                           style="-fx-background-color: white; -fx-border-color: #dcdcdc; -fx-border-radius: 5;">
+                    <columns>
+                        <TableColumn fx:id="kodeColumn" text="Kode Buku"/>
+                        <TableColumn fx:id="kategoriColumn" text="Kategori"/>
+                        <TableColumn fx:id="judulColumn" text="Judul"/>
+                        <TableColumn fx:id="pengarangColumn" text="Pengarang"/>
+                        <TableColumn fx:id="penerbitColumn" text="Penerbit"/>
+                        <TableColumn fx:id="tahunColumn" text="Tahun"/>
+                        <TableColumn fx:id="edisiColumn" text="Edisi"/>
+                        <TableColumn fx:id="pengadaanColumn" text="Pengadaan"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>
