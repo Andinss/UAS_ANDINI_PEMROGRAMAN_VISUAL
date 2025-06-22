@@ -187,7 +187,7 @@ public class BukuController implements Initializable {
     @FXML
     private void handleReset() {
         searchField.clear();
-        loadTable(); // tampilkan semua data
+        loadTable(); 
     }
     
     @FXML

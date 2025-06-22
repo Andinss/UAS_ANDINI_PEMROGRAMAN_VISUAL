@@ -39,18 +39,18 @@ public class Main extends Application {
         primaryStage.show();
     }
     
-    public void changeScene(String fxmlFile) throws Exception {
+        public void changeScene(String fxmlFile) throws Exception {
 
-    Parent newRoot = FXMLLoader.load(getClass().getResource(fxmlFile));
+        Parent newRoot = FXMLLoader.load(getClass().getResource(fxmlFile));
 
-    // mengambil ukuran root container pada file fxml
-    double width = newRoot.prefWidth(-1);  // -1 nilai preferensi
-    double height = newRoot.prefHeight(-1); // -1 nilai preferensi
+        // mengambil ukuran root container pada file fxml
+        double width = newRoot.prefWidth(-1);  
+        double height = newRoot.prefHeight(-1); 
 
-    primaryStage.getScene().setRoot(newRoot);
-    primaryStage.setWidth(width);
-    primaryStage.setHeight(height);
-}
+        primaryStage.getScene().setRoot(newRoot);
+        primaryStage.setWidth(width);
+        primaryStage.setHeight(height);
+    }
 
     /**
      * @param args the command line arguments
