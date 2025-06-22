@@ -4,6 +4,7 @@
  */
 package m8.tugas.controllers;
 
+import java.io.FileWriter;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -19,12 +20,15 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class BukuController implements Initializable {
 
-    @FXML private TextField kodeField, judulField, pengarangField, penerbitField, tahunField, edisiField;
+    @FXML private TextField kodeField, judulField, pengarangField, penerbitField, tahunField, edisiField, searchField;
     @FXML private DatePicker tanggalPengadaanPicker;
+    @FXML private DatePicker filterDatePicker;
     @FXML private ComboBox<KategoriBuku> kategoriComboBox;
 
     @FXML private TableView<Buku> bukuTable;
@@ -67,6 +71,9 @@ public class BukuController implements Initializable {
     private void loadKategori() {
         ObservableList<KategoriBuku> list = FXCollections.observableArrayList(kategoriDAO.getAllKategori());
         kategoriComboBox.setItems(list);
+        
+        kodeField.setText(bukuDAO.generateKodeBuku());
+        kodeField.setEditable(false); // agar tidak bisa diubah manual
     }
 
     private void loadTable() {
@@ -154,6 +161,84 @@ public class BukuController implements Initializable {
             showAlert(Alert.AlertType.WARNING, "Validasi", "Pilih data dari tabel atau isi kode buku.");
         }
     }
+    
+    @FXML
+    private void handleFilter() {
+        String keyword = searchField.getText().toLowerCase();
+
+        try {
+            ObservableList<Buku> list = FXCollections.observableArrayList(bukuDAO.getAllBuku());
+            ObservableList<Buku> filtered = FXCollections.observableArrayList();
+
+            for (Buku buku : list) {
+                if (buku.getJudul().toLowerCase().contains(keyword) ||
+                    buku.getPengarang().toLowerCase().contains(keyword)) {
+                    filtered.add(buku);
+                }
+            }
+
+            bukuTable.setItems(filtered);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Gagal memfilter data.");
+        }
+    }
+    
+    @FXML
+    private void handleReset() {
+        searchField.clear();
+        loadTable(); // tampilkan semua data
+    }
+    
+    @FXML
+    private void handleExportCSV() {
+        LocalDate selectedDate = filterDatePicker.getValue();
+
+        if (selectedDate == null) {
+            showAlert(Alert.AlertType.WARNING, "Validasi", "Silakan pilih tanggal pengadaan terlebih dahulu.");
+            return;
+        }
+
+        try {
+            List<Buku> allBuku = bukuDAO.getAllBuku();
+            List<Buku> filtered = new ArrayList<>();
+
+            for (Buku buku : allBuku) {
+                if (buku.getTanggalPengadaan().isEqual(selectedDate)) {
+                    filtered.add(buku);
+                }
+            }
+
+            if (filtered.isEmpty()) {
+                showAlert(Alert.AlertType.INFORMATION, "Info", "Tidak ada data untuk tanggal tersebut.");
+                return;
+            }
+
+            String filename = "buku_" + selectedDate + ".csv";
+            FileWriter writer = new FileWriter(filename);
+            writer.write("Kode Buku,Kategori,Judul,Pengarang,Penerbit,Tahun,Edisi,Tanggal Pengadaan\n");
+
+            for (Buku buku : filtered) {
+                writer.write(String.format("%s,%s,%s,%s,%s,%d,%d,%s\n",
+                        buku.getKodeBuku(),
+                        buku.getKategori().getNamaKategori(),
+                        buku.getJudul(),
+                        buku.getPengarang(),
+                        buku.getPenerbit(),
+                        buku.getTahunTerbit(),
+                        buku.getEdisi(),
+                        buku.getTanggalPengadaan().toString()
+                ));
+            }
+
+            writer.close();
+            showAlert(Alert.AlertType.INFORMATION, "Sukses", "Data berhasil diekspor ke file: " + filename);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Gagal menulis file CSV.");
+        }
+    }
+
 
     private boolean isInputValid() {
         if (kodeField.getText().isEmpty() || kategoriComboBox.getValue() == null || judulField.getText().isEmpty() ||
@@ -213,7 +298,7 @@ public class BukuController implements Initializable {
     }
 
     private void clearFields() {
-        kodeField.clear();
+        kodeField.setText(bukuDAO.generateKodeBuku()); // Generate ulang
         kategoriComboBox.getSelectionModel().clearSelection();
         judulField.clear();
         pengarangField.clear();
@@ -221,5 +306,5 @@ public class BukuController implements Initializable {
         tahunField.clear();
         edisiField.clear();
         tanggalPengadaanPicker.setValue(null);
-    }
+    } 
 }

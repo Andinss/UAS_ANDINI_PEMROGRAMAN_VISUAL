@@ -83,5 +83,26 @@ public class BukuDAO {
         stmt.setString(1, kodeBuku);
         stmt.executeUpdate();
     }
+    
+    public String generateKodeBuku() {
+    String newKode = "B00001";
+    String sql = "SELECT kode_buku FROM buku ORDER BY kode_buku DESC LIMIT 1";
+
+    try (PreparedStatement stmt = conn.prepareStatement(sql);
+         ResultSet rs = stmt.executeQuery()) {
+
+        if (rs.next()) {
+            String lastKode = rs.getString("kode_buku");
+            int nomor = Integer.parseInt(lastKode.substring(1)); // Buang huruf "B"
+            nomor++;
+            newKode = String.format("B%05d", nomor); // Format B00001 dst.
+        }
+    } catch (SQLException e) {
+        System.out.println("Gagal generate kode buku: " + e.getMessage());
+    }
+
+    return newKode;
+}
+
 }
 
