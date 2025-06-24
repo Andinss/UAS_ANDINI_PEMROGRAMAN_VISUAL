@@ -19,5 +19,8 @@ public class Session {
     public static void setIsLoggedIn(boolean status) {
         isLoggedIn = status;
     }
-}
 
+    public static void clear() {
+        isLoggedIn = false;
+    }
+}

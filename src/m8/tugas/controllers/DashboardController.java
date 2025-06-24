@@ -12,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import m8.tugas.models.Session;
 
 /**
@@ -28,27 +29,28 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
-        // Cek apakah user sudah login
-        if (!Session.isLoggedIn()) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/m8/tugas/views/Login.fxml"));
-                Parent root = loader.load();
-                Stage stage = new Stage();
-                stage.setScene(new Scene(root));
-                stage.setTitle("Login Dulu");
-                stage.show();
+        javafx.application.Platform.runLater(() -> {
+            if (!Session.isLoggedIn()) {
+                try {
+                    Parent root = FXMLLoader.load(getClass().getResource("/m8/tugas/views/Login.fxml"));
+                    Stage stage = new Stage();
+                    stage.setScene(new Scene(root));
+                    stage.setTitle("Ma'soem University");
 
-                // Tutup jendela sekarang (Dashboard)
-                Stage currentStage = (Stage) mainContent.getScene().getWindow();
-                currentStage.close();
+                    Image icon = new Image(getClass().getResourceAsStream("/assets/img/icon.png"));
+                    stage.getIcons().add(icon);
 
-            } catch (Exception e) {
-                e.printStackTrace();
+                    stage.show();
+
+                    Stage currentStage = (Stage) mainContent.getScene().getWindow();
+                    currentStage.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                System.out.println("Dashboard terbuka");
             }
-            return;
-        }
-
-        System.out.println("Dashboard terbuka");
+        });
     }
 
     @FXML
@@ -59,13 +61,18 @@ public class DashboardController {
     @FXML
     private void handleButtonLogoutAction() {
         try {
-            Session.setIsLoggedIn(false); // logout
+            Session.clear(); 
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/m8/tugas/views/Login.fxml"));
             Parent root = loader.load();
             Stage stage = new Stage();
             stage.setScene(new Scene(root));
-            stage.setTitle("Login");
-            stage.show();
+            stage.setTitle("Ma'soem University");
+
+            Image icon = new Image(getClass().getResourceAsStream("/assets/img/icon.png"));
+            stage.getIcons().add(icon); 
+
+            stage.show();   
 
             Stage currentStage = (Stage) mainContent.getScene().getWindow();
             currentStage.close();

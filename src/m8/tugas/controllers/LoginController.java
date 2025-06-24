@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.image.Image;
 import m8.tugas.models.Session;
 
 /**
@@ -37,6 +38,11 @@ public class LoginController {
                 Stage stage = (Stage) inputUsername.getScene().getWindow();
                 stage.setScene(new Scene(root));
                 stage.setTitle("Ma'soem University");
+
+                Image icon = new Image(getClass().getResourceAsStream("/assets/img/icon.png"));
+                stage.getIcons().add(icon); 
+
+                stage.show(); 
             } catch (Exception e) {
                 labelError.setText("Gagal membuka dashboard.");
                 e.printStackTrace();
