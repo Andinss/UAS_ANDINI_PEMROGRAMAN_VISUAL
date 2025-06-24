@@ -29,7 +29,7 @@ public class LoginController {
         String pass = inputPassword.getText();
 
         if (user.equals("admin") && pass.equals("123")) {
-            Session.setLoggedIn(true);
+            Session.setIsLoggedIn(true); 
 
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/m8/tugas/views/Dashboard.fxml"));

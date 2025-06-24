@@ -16,7 +16,7 @@ public class Session {
         return isLoggedIn;
     }
 
-    public static void setLoggedIn(boolean status) {
+    public static void setIsLoggedIn(boolean status) {
         isLoggedIn = status;
     }
 }

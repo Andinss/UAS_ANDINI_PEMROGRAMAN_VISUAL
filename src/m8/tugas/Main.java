@@ -24,7 +24,7 @@ public class Main extends Application {
         primaryStage.centerOnScreen();
 
         // Memuat file FXML
-        Parent root = FXMLLoader.load(getClass().getResource("/m8/tugas/views/login.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/m8/tugas/views/Login.fxml"));
 
         // Membuat scene dengan root dari FXML
         Scene scene = new Scene(root);

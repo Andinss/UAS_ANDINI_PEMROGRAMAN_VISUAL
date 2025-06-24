@@ -28,6 +28,26 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
+        // Cek apakah user sudah login
+        if (!Session.isLoggedIn()) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/m8/tugas/views/Login.fxml"));
+                Parent root = loader.load();
+                Stage stage = new Stage();
+                stage.setScene(new Scene(root));
+                stage.setTitle("Login Dulu");
+                stage.show();
+
+                // Tutup jendela sekarang (Dashboard)
+                Stage currentStage = (Stage) mainContent.getScene().getWindow();
+                currentStage.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
         System.out.println("Dashboard terbuka");
     }
 
@@ -39,31 +59,28 @@ public class DashboardController {
     @FXML
     private void handleButtonLogoutAction() {
         try {
-            Session.setLoggedIn(false); 
-
+            Session.setIsLoggedIn(false); // logout
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/m8/tugas/views/Login.fxml"));
             Parent root = loader.load();
-            Stage stage = (Stage) mainContent.getScene().getWindow();
+            Stage stage = new Stage();
             stage.setScene(new Scene(root));
-            stage.setTitle("Ma'soem University");
+            stage.setTitle("Login");
+            stage.show();
+
+            Stage currentStage = (Stage) mainContent.getScene().getWindow();
+            currentStage.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-    private void setMainContent(String fxml) {
-    try {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-        javafx.scene.Parent newContent = loader.load(); 
-        mainContent.getChildren().setAll(newContent);
 
-        AnchorPane.setTopAnchor(newContent, 0.0);
-        AnchorPane.setBottomAnchor(newContent, 0.0);
-        AnchorPane.setLeftAnchor(newContent, 0.0);
-        AnchorPane.setRightAnchor(newContent, 0.0);
-    } catch (Exception e) {
-        e.printStackTrace();
+    private void setMainContent(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent content = loader.load();
+            mainContent.getChildren().setAll(content);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
-}
-
