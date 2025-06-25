@@ -24,12 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import javafx.stage.FileChooser;
+import java.io.File;
+import java.util.Comparator;
+
 public class BukuController implements Initializable {
 
     @FXML private TextField kodeField, judulField, pengarangField, penerbitField, tahunField, edisiField, searchField;
     @FXML private DatePicker tanggalPengadaanPicker;
     @FXML private DatePicker filterDatePicker;
     @FXML private ComboBox<KategoriBuku> kategoriComboBox;
+    @FXML private ComboBox<String> sortComboBox;
 
     @FXML private TableView<Buku> bukuTable;
     @FXML private TableColumn<Buku, String> kategoriColumn;
@@ -61,6 +66,7 @@ public class BukuController implements Initializable {
         tahunColumn.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getTahunTerbit()).asObject());
         edisiColumn.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getEdisi()).asObject());
         pengadaanColumn.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getTanggalPengadaan()));
+        sortComboBox.setItems(FXCollections.observableArrayList("Judul A-Z","Judul Z-A","Pengadaan Terbaru","Pengadaan Terlama","Kategori A-Z"));
 
         bukuTable.setOnMouseClicked(event -> handleTableClick());
 
@@ -165,11 +171,19 @@ public class BukuController implements Initializable {
     @FXML
     private void handleFilter() {
         String keyword = searchField.getText().toLowerCase();
+        String selectedSort = sortComboBox.getValue();
 
         try {
-            ObservableList<Buku> list = FXCollections.observableArrayList(bukuDAO.getAllBuku());
-            ObservableList<Buku> filtered = FXCollections.observableArrayList();
+            List<Buku> list = bukuDAO.getAllBuku();
 
+            // Jika kosong, tampilkan semua data
+            if (keyword.isBlank() && selectedSort == null) {
+                bukuTable.setItems(FXCollections.observableArrayList(list));
+                return;
+            }
+
+            // Filter dulu berdasarkan keyword
+            List<Buku> filtered = new ArrayList<>();
             for (Buku buku : list) {
                 if (buku.getJudul().toLowerCase().contains(keyword) ||
                     buku.getPengarang().toLowerCase().contains(keyword)) {
@@ -177,19 +191,41 @@ public class BukuController implements Initializable {
                 }
             }
 
-            bukuTable.setItems(filtered);
+            // Jika tidak ada hasil
+            if (filtered.isEmpty()) {
+                bukuTable.setItems(FXCollections.observableArrayList());
+                showAlert(Alert.AlertType.INFORMATION, "Tidak Ditemukan", "Tidak ada data yang cocok.");
+                return;
+            }
+
+            // Sort berdasarkan pilihan
+            if (selectedSort != null) {
+                switch (selectedSort) {
+                    case "Judul A-Z" -> filtered.sort(Comparator.comparing(Buku::getJudul));
+                    case "Judul Z-A" -> filtered.sort(Comparator.comparing(Buku::getJudul).reversed());
+                    case "Pengadaan Terbaru" -> filtered.sort(Comparator.comparing(Buku::getTanggalPengadaan).reversed());
+                    case "Pengadaan Terlama" -> filtered.sort(Comparator.comparing(Buku::getTanggalPengadaan));
+                    case "Kategori A-Z" -> filtered.sort(Comparator.comparing(b -> b.getKategori().getNamaKategori()));
+                }
+            }
+
+            // Tampilkan hasil
+            bukuTable.setItems(FXCollections.observableArrayList(filtered));
+
         } catch (SQLException e) {
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Error", "Gagal memfilter data.");
+            showAlert(Alert.AlertType.ERROR, "Error", "Gagal melakukan filter/sort.");
         }
     }
     
     @FXML
     private void handleReset() {
-        searchField.clear();
-        loadTable(); 
+        searchField.clear();                         
+        sortComboBox.getSelectionModel().clearSelection(); 
+        filterDatePicker.setValue(null);             
+        loadTable();                                 
     }
-    
+
     @FXML
     private void handleExportCSV() {
         LocalDate selectedDate = filterDatePicker.getValue();
@@ -214,31 +250,40 @@ public class BukuController implements Initializable {
                 return;
             }
 
-            String filename = "buku_" + selectedDate + ".csv";
-            FileWriter writer = new FileWriter(filename);
-            writer.write("Kode Buku,Kategori,Judul,Pengarang,Penerbit,Tahun,Edisi,Tanggal Pengadaan\n");
+            // 💾 FileChooser
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Simpan Laporan Buku");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+            fileChooser.setInitialFileName("buku_" + selectedDate + ".csv");
 
-            for (Buku buku : filtered) {
-                writer.write(String.format("%s,%s,%s,%s,%s,%d,%d,%s\n",
-                        buku.getKodeBuku(),
-                        buku.getKategori().getNamaKategori(),
-                        buku.getJudul(),
-                        buku.getPengarang(),
-                        buku.getPenerbit(),
-                        buku.getTahunTerbit(),
-                        buku.getEdisi(),
-                        buku.getTanggalPengadaan().toString()
-                ));
+            File file = fileChooser.showSaveDialog(bukuTable.getScene().getWindow());
+
+            if (file != null) {
+                FileWriter writer = new FileWriter(file);
+                writer.write("Kode Buku,Kategori,Judul,Pengarang,Penerbit,Tahun,Edisi,Tanggal Pengadaan\n");
+
+                for (Buku buku : filtered) {
+                    writer.write(String.format("%s,%s,%s,%s,%s,%d,%d,%s\n",
+                            buku.getKodeBuku(),
+                            buku.getKategori().getNamaKategori(),
+                            buku.getJudul(),
+                            buku.getPengarang(),
+                            buku.getPenerbit(),
+                            buku.getTahunTerbit(),
+                            buku.getEdisi(),
+                            buku.getTanggalPengadaan()
+                    ));
+                }
+
+                writer.close();
+                showAlert(Alert.AlertType.INFORMATION, "Sukses", "Data berhasil diekspor ke:\n" + file.getAbsolutePath());
             }
 
-            writer.close();
-            showAlert(Alert.AlertType.INFORMATION, "Sukses", "Data berhasil diekspor ke file: " + filename);
         } catch (Exception e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Error", "Gagal menulis file CSV.");
         }
     }
-
 
     private boolean isInputValid() {
         if (kodeField.getText().isEmpty() || kategoriComboBox.getValue() == null || judulField.getText().isEmpty() ||
