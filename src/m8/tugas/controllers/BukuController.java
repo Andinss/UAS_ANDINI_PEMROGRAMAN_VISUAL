@@ -32,7 +32,8 @@ public class BukuController implements Initializable {
 
     @FXML private TextField kodeField, judulField, pengarangField, penerbitField, tahunField, edisiField, searchField;
     @FXML private DatePicker tanggalPengadaanPicker;
-    @FXML private DatePicker filterDatePicker;
+    @FXML private DatePicker startDatePicker;
+    @FXML private DatePicker endDatePicker;
     @FXML private ComboBox<KategoriBuku> kategoriComboBox;
     @FXML private ComboBox<String> sortComboBox;
 
@@ -172,33 +173,33 @@ public class BukuController implements Initializable {
     private void handleFilter() {
         String keyword = searchField.getText().toLowerCase();
         String selectedSort = sortComboBox.getValue();
+        LocalDate startDate = startDatePicker.getValue();
+        LocalDate endDate = endDatePicker.getValue();
 
         try {
             List<Buku> list = bukuDAO.getAllBuku();
-
-            // Jika kosong, tampilkan semua data
-            if (keyword.isBlank() && selectedSort == null) {
-                bukuTable.setItems(FXCollections.observableArrayList(list));
-                return;
-            }
-
-            // Filter dulu berdasarkan keyword
             List<Buku> filtered = new ArrayList<>();
+
             for (Buku buku : list) {
-                if (buku.getJudul().toLowerCase().contains(keyword) ||
-                    buku.getPengarang().toLowerCase().contains(keyword)) {
+                boolean cocokKeyword = buku.getJudul().toLowerCase().contains(keyword) ||
+                                       buku.getPengarang().toLowerCase().contains(keyword);
+
+                boolean cocokTanggal = true;
+                if (startDate != null && endDate != null) {
+                    cocokTanggal = !buku.getTanggalPengadaan().isBefore(startDate) &&
+                                   !buku.getTanggalPengadaan().isAfter(endDate);
+                } else if (startDate != null) {
+                    cocokTanggal = !buku.getTanggalPengadaan().isBefore(startDate);
+                } else if (endDate != null) {
+                    cocokTanggal = !buku.getTanggalPengadaan().isAfter(endDate);
+                }
+
+                if (cocokKeyword && cocokTanggal) {
                     filtered.add(buku);
                 }
             }
 
-            // Jika tidak ada hasil
-            if (filtered.isEmpty()) {
-                bukuTable.setItems(FXCollections.observableArrayList());
-                showAlert(Alert.AlertType.INFORMATION, "Tidak Ditemukan", "Tidak ada data yang cocok.");
-                return;
-            }
-
-            // Sort berdasarkan pilihan
+            // Sorting
             if (selectedSort != null) {
                 switch (selectedSort) {
                     case "Judul A-Z" -> filtered.sort(Comparator.comparing(Buku::getJudul));
@@ -209,7 +210,6 @@ public class BukuController implements Initializable {
                 }
             }
 
-            // Tampilkan hasil
             bukuTable.setItems(FXCollections.observableArrayList(filtered));
 
         } catch (SQLException e) {
@@ -220,68 +220,52 @@ public class BukuController implements Initializable {
     
     @FXML
     private void handleReset() {
-        searchField.clear();                         
-        sortComboBox.getSelectionModel().clearSelection(); 
-        filterDatePicker.setValue(null);             
-        loadTable();                                 
+        searchField.clear();
+        sortComboBox.getSelectionModel().clearSelection();
+        startDatePicker.setValue(null);
+        endDatePicker.setValue(null);
+        loadTable(); 
     }
-
+    
     @FXML
     private void handleExportCSV() {
-        LocalDate selectedDate = filterDatePicker.getValue();
+        ObservableList<Buku> list = bukuTable.getItems();
 
-        if (selectedDate == null) {
-            showAlert(Alert.AlertType.WARNING, "Validasi", "Silakan pilih tanggal pengadaan terlebih dahulu.");
+        if (list.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Kosong", "Tidak ada data untuk diekspor.");
             return;
         }
 
-        try {
-            List<Buku> allBuku = bukuDAO.getAllBuku();
-            List<Buku> filtered = new ArrayList<>();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Simpan Laporan Buku");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        fileChooser.setInitialFileName("buku_export.csv");
 
-            for (Buku buku : allBuku) {
-                if (buku.getTanggalPengadaan().isEqual(selectedDate)) {
-                    filtered.add(buku);
-                }
+        File file = fileChooser.showSaveDialog(null);
+        if (file == null) {
+            return; // User cancel
+        }
+
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write("Kode Buku,Kategori,Judul,Pengarang,Penerbit,Tahun,Edisi,Tanggal Pengadaan\n");
+
+            for (Buku buku : list) {
+                writer.write(String.format("%s,%s,%s,%s,%s,%d,%d,%s\n",
+                        buku.getKodeBuku(),
+                        buku.getKategori().getNamaKategori(),
+                        buku.getJudul(),
+                        buku.getPengarang(),
+                        buku.getPenerbit(),
+                        buku.getTahunTerbit(),
+                        buku.getEdisi(),
+                        buku.getTanggalPengadaan()));
             }
 
-            if (filtered.isEmpty()) {
-                showAlert(Alert.AlertType.INFORMATION, "Info", "Tidak ada data untuk tanggal tersebut.");
-                return;
-            }
-
-            // 💾 FileChooser
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Simpan Laporan Buku");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
-            fileChooser.setInitialFileName("buku_" + selectedDate + ".csv");
-
-            File file = fileChooser.showSaveDialog(bukuTable.getScene().getWindow());
-
-            if (file != null) {
-                FileWriter writer = new FileWriter(file);
-                writer.write("Kode Buku,Kategori,Judul,Pengarang,Penerbit,Tahun,Edisi,Tanggal Pengadaan\n");
-
-                for (Buku buku : filtered) {
-                    writer.write(String.format("%s,%s,%s,%s,%s,%d,%d,%s\n",
-                            buku.getKodeBuku(),
-                            buku.getKategori().getNamaKategori(),
-                            buku.getJudul(),
-                            buku.getPengarang(),
-                            buku.getPenerbit(),
-                            buku.getTahunTerbit(),
-                            buku.getEdisi(),
-                            buku.getTanggalPengadaan()
-                    ));
-                }
-
-                writer.close();
-                showAlert(Alert.AlertType.INFORMATION, "Sukses", "Data berhasil diekspor ke:\n" + file.getAbsolutePath());
-            }
+            showAlert(Alert.AlertType.INFORMATION, "Berhasil", "Data berhasil diekspor ke: " + file.getAbsolutePath());
 
         } catch (Exception e) {
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Error", "Gagal menulis file CSV.");
+            showAlert(Alert.AlertType.ERROR, "Gagal", "Export gagal: " + e.getMessage());
         }
     }
 
